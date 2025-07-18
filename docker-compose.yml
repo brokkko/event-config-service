@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  elasticsearch:
+    image: elasticsearch:9.0.3
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  app:
+    build: .
+    container_name: event-config-service
+    depends_on:
+      - mongo
+      - elasticsearch
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=elastic
+      - storage.type=elastic
+
+      - spring.data.mongodb.host=mongo
+      - spring.data.mongodb.port=27017
+
+      - spring.elasticsearch.uris=http://elasticsearch:9200
+      - elastic.index.event-config=event_config
+
+volumes:
+  mongo_data:
+  es_data:
